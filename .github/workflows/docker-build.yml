@@ -10,23 +10,20 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-      DOCKER_CLI_EXPERIMENTAL: disabled
-      DOCKER_BUILDKIT: 0
     
     steps:
-    - uses: actions/checkout@v4
+    - name: Check out code
+      uses: actions/checkout@v4
       
-    - name: Build Docker image
+    - name: Set up Docker
       run: |
-        DOCKER_BUILDKIT=0 docker build --platform linux/amd64 --no-cache -t cursor-api:latest .
+        docker version
         
-    - name: Test image
+    - name: Build image
       run: |
-        docker images
-        docker inspect cursor-api:latest
+        docker build -t cursor-api:latest .
         
-    - name: Save Docker image
+    - name: Save image
       run: |
         mkdir -p artifacts
         docker save cursor-api:latest > artifacts/cursor-api.tar
