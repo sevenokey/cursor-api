@@ -10,13 +10,16 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      DOCKER_CLI_EXPERIMENTAL: disabled
+      DOCKER_BUILDKIT: 0
     
     steps:
     - uses: actions/checkout@v4
       
     - name: Build Docker image
       run: |
-        docker build --platform linux/amd64 -t cursor-api:latest .
+        DOCKER_BUILDKIT=0 docker build --platform linux/amd64 --no-cache -t cursor-api:latest .
         
     - name: Test image
       run: |
