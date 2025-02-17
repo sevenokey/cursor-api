@@ -31,6 +31,6 @@ RUN apt-get update && \
 
 COPY --from=builder /app/cursor-api .
 
-ENV PORT=3000
+ENV PORT=4000
 EXPOSE ${PORT}
 CMD ["./cursor-api"]
