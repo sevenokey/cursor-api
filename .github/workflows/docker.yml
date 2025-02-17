@@ -59,32 +59,38 @@ jobs:
             image=moby/buildkit:latest
             network=host
 
-      - name: Build and push Docker image
+      - name: Build Docker image
         uses: docker/build-push-action@v6.11.0
-        id: build-push
-        continue-on-error: true  # 即使推送失败也继续执行
-        env:
-          DOCKER_BUILD_RECORD_UPLOAD: false
+        id: build
         with:
           context: .
-          push: true
-          platforms: linux/amd64,linux/arm64
+          push: false  # 不推送，只构建
+          platforms: linux/amd64  # 只构建 x86_64 平台
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          outputs: type=local,dest=./dist
+          outputs: type=docker,dest=/tmp/myimage.tar  # 使用 docker 格式保存
+
+      - name: Push Docker image
+        continue-on-error: true  # 推送失败不影响后续步骤
+        run: |
+          docker load < /tmp/myimage.tar
+          docker push ${{ env.IMAGE_NAME }}:${{ github.event_name == 'workflow_dispatch' && steps.cargo_version.outputs.version || github.ref_name }}
+          if [[ "${{ github.event_name == 'workflow_dispatch' && inputs.update_latest || github.event_name == 'push' }}" == "true" ]]; then
+            docker push ${{ env.IMAGE_NAME }}:latest
+          fi
 
       - name: Prepare artifacts
         if: (github.event_name == 'workflow_dispatch' && inputs.upload_artifacts) || github.event_name == 'push'
         run: |
           mkdir -p artifacts
+          # 保存 Docker 镜像作为构建产物
+          cp /tmp/myimage.tar artifacts/cursor-api-x86_64.tar
           if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
             cp dist/linux_amd64/app/cursor-api artifacts/cursor-api-x86_64-${{ steps.cargo_version.outputs.version }}
-            cp dist/linux_arm64/app/cursor-api artifacts/cursor-api-aarch64-${{ steps.cargo_version.outputs.version }}
           else
             cp dist/linux_amd64/app/cursor-api artifacts/cursor-api-x86_64-${{ github.ref_name }}
-            cp dist/linux_arm64/app/cursor-api artifacts/cursor-api-aarch64-${{ github.ref_name }}
           fi
 
       - name: Upload artifacts
