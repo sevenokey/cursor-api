@@ -16,7 +16,7 @@ jobs:
       
     - name: Build Docker image
       run: |
-        docker build -t cursor-api:latest .
+        docker build --platform linux/amd64 -t cursor-api:latest .
         
     - name: Test image
       run: |
