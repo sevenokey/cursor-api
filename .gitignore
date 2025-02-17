@@ -1,4 +1,4 @@
-/target
+/target/
 /tools/*/target
 /*.log
 /*.env
@@ -24,3 +24,10 @@ node_modules
 /*.bin
 /result.txt
 tools/tokenizer/
+*.tar
+*.tar.gz
+*.exe
+*.dll
+*.so
+*.dylib
+Cargo.lock
