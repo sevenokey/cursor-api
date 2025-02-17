@@ -47,8 +47,6 @@ jobs:
         with:
           images: ${{ env.IMAGE_NAME }}
           tags: |
-            type=raw,value=latest,enable=${{ github.event_name == 'workflow_dispatch' && inputs.update_latest }}
-            type=raw,value=latest,enable=${{ github.event_name == 'push' }}
             type=raw,value=${{ steps.cargo_version.outputs.version }},enable=${{ github.event_name == 'workflow_dispatch' }}
             type=raw,value=${{ github.ref_name }},enable=${{ github.event_name == 'push' }}
 
@@ -64,22 +62,13 @@ jobs:
         id: build
         with:
           context: .
-          push: false  # 不推送，只构建
+          push: false
           platforms: linux/amd64  # 只构建 x86_64 平台
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          outputs: type=docker,dest=/tmp/myimage.tar  # 使用 docker 格式保存
-
-      - name: Push Docker image
-        continue-on-error: true  # 推送失败不影响后续步骤
-        run: |
-          docker load < /tmp/myimage.tar
-          docker push ${{ env.IMAGE_NAME }}:${{ github.event_name == 'workflow_dispatch' && steps.cargo_version.outputs.version || github.ref_name }}
-          if [[ "${{ github.event_name == 'workflow_dispatch' && inputs.update_latest || github.event_name == 'push' }}" == "true" ]]; then
-            docker push ${{ env.IMAGE_NAME }}:latest
-          fi
+          outputs: type=docker,dest=/tmp/myimage.tar
 
       - name: Prepare artifacts
         if: (github.event_name == 'workflow_dispatch' && inputs.upload_artifacts) || github.event_name == 'push'
