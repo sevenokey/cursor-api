@@ -16,7 +16,9 @@ jobs:
       
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
-      
+      with:
+        buildkitd-flags: --debug
+        
     - name: Build Docker image
       uses: docker/build-push-action@v5
       with:
@@ -24,11 +26,24 @@ jobs:
         platforms: linux/amd64
         push: false
         load: true
-        tags: cursor-api:latest
+        tags: local/cursor-api:latest
         cache-from: type=gha
         cache-to: type=gha,mode=max
+        no-cache: true
         
     - name: Test image
       run: |
         docker images
-        docker inspect cursor-api:latest
+        docker inspect local/cursor-api:latest
+        
+    - name: Save Docker image
+      run: |
+        mkdir -p artifacts
+        docker save local/cursor-api:latest > artifacts/cursor-api.tar
+        
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: docker-image
+        path: artifacts/cursor-api.tar
+        retention-days: 1
